@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElektroPuzzle: Tantangan Kimia Listrik</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --accent: #e74c3c;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --success: #27ae60;
+            --error: #c0392b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f6fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 20px 0;
+            color: white;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .game-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            min-height: 500px;
+            position: relative;
+        }
+        
+        .game-status {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: var(--light);
+            border-radius: 8px;
+        }
+        
+        .level-indicator {
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .timer {
+            color: var(--accent);
+            font-weight: bold;
+        }
+        
+        .lives {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .life {
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .instructions {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 10px;
+            background-color: rgba(46, 204, 113, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .options-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .drop-area {
+            width: 300px;
+            height: 200px;
+            border: 3px dashed var(--primary);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 30px auto;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-area.highlight {
+            background-color: rgba(52, 152, 219, 0.1);
+            transform: scale(1.05);
+        }
+        
+        .option-card {
+            width: 180px;
+            height: 100px;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: grab;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .option-card.dragging {
+            opacity: 0.5;
+            transform: scale(1.05);
+        }
+        
+        .pair-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .pair-formula {
+            font-family: monospace;
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+        
+        .button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        
+        .button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+        }
+        
+        .feedback.show {
+            opacity: 1;
+            max-height: 500px;
+            margin-bottom: 20px;
+        }
+        
+        .feedback.success {
+            background-color: rgba(46, 204, 113, 0.2);
+            border-left: 4px solid var(--success);
+        }
+        
+        .feedback.error {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid var(--error);
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+        
+        .modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            transform: translateY(-50px);
+            transition: all 0.3s;
+        }
+        
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .modal-text {
+            margin-bottom: 20px;
+        }
+        
+        .welcome-image {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            background-color: #f0f0f0;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            color: var(--primary);
+        }
+
+        .active-pairs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .active-pair {
+            padding: 10px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .check-button {
+            margin-top: 30px;
+        }
+
+        .next-level {
+            background-color: var(--success);
+        }
+
+        .next-level:hover {
+            background-color: #219653;
+        }
+
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px 15px;
+            text-align: center;
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .highlight-row {
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .options-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .option-card {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ElektroPuzzle</h1>
+            <div class="subtitle">Tantangan Kimia Listrik</div>
+        </header>
+        
+        <div class="game-container">
+            <div class="game-status">
+                <div class="level-indicator">Level 1: Tebak Pasangan Redoks</div>
+                <div class="timer">Waktu: <span id="time">180</span> detik</div>
+                <div class="lives">
+                    <div class="life">❤️</div>
+                    <div class="life">❤️</div>
+                    <div class="life">❤️</div>
+                </div>
+            </div>
+            
+            <div class="game-area">
+                <div class="instructions">
+                    <h2>Petunjuk</h2>
+                    <p>Pilih pasangan redoks yang dapat menghasilkan reaksi spontan di sel galvani!</p>
+                    <p>Drag & drop pasangan logam/ion ke area di bawah.</p>
+                </div>
+                
+                <div class="active-pairs" id="activePairs">
+                    <!-- Selected pairs will appear here -->
+                </div>
+                
+                <div class="drop-area" id="dropArea">
+                    <p>Tarik pasangan redoks ke sini</p>
+                </div>
+                
+                <div class="options-container" id="optionsContainer">
+                    <div class="option-card" draggable="true" data-pair="A">
+                        <div class="pair-name">Pasangan A</div>
+                        <div class="pair-formula">Zn²⁺/Zn dan Cu²⁺/Cu</div>
+                    </div>
+                    <div class="option-card" draggable="true" data-pair="B">
+                        <div class="pair-name">Pasangan B</div>
+                        <div class="pair-formula">Ag⁺/Ag dan Na⁺/Na</div>
+                    </div>
+                    <div class="option-card" draggable="true" data-pair="C">
+                        <div class="pair-name">Pasangan C</div>
+                        <div class="pair-formula">Fe³⁺/Fe dan H⁺/H₂</div>
+                    </div>
+                    <div class="option-card" draggable="true" data-pair="D">
+                        <div class="pair-name">Pasangan D</div>
+                        <div class="pair-formula">Br₂/Br⁻ dan Cl₂/Cl⁻</div>
+                    </div>
+                </div>
+                
+                <button class="button check-button" id="checkButton" disabled>Periksa Jawaban</button>
+                
+                <div class="feedback" id="feedback">
+                    <!-- Feedback will be shown here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Welcome Modal -->
+    <div class="modal show" id="welcomeModal">
+        <div class="modal-content">
+            <div class="welcome-image">⚡</div>
+            <h2 class="modal-title">Selamat Datang di ElektroPuzzle!</h2>
+            <p class="modal-text">
+                Uji pemahaman elektrokimia Anda melalui serangkaian tantangan interaktif.
+                Mulailah dengan Level 1: Tebak Pasangan Redoks yang dapat menghasilkan reaksi spontan.
+            </p>
+            <button class="button" id="startGameButton">Mulai Permainan</button>
+        </div>
+    </div>
+    
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="welcome-image">🏆</div>
+            <h2 class="modal-title">Selamat!</h2>
+            <p class="modal-text">
+                Anda berhasil menyelesaikan Level 1!
+            </p>
+            <div class="explanation">
+                <h3>Penjelasan:</h3>
+                <p>
+                    Pasangan Zn²⁺/Zn dan Cu²⁺/Cu membentuk reaksi redoks spontan karena:
+                </p>
+                <table>
+                    <tr>
+                        <th>Setengah Reaksi</th>
+                        <th>E° (Volt)</th>
+                    </tr>
+                    <tr>
+                        <td>Zn²⁺ + 2e⁻ → Zn</td>
+                        <td>-0.76</td>
+                    </tr>
+                    <tr class="highlight-row">
+                        <td>Cu²⁺ + 2e⁻ → Cu</td>
+                        <td>+0.34</td>
+                    </tr>
+                </table>
+                <p>
+                    Karena potensial reduksi Cu²⁺/Cu lebih positif daripada Zn²⁺/Zn, 
+                    maka Cu²⁺ akan lebih mudah tereduksi (menjadi katoda) dan Zn akan 
+                    teroksidasi (menjadi anoda).
+                </p>
+                <p>
+                    Reaksi sel: Zn + Cu²⁺ → Zn²⁺ + Cu
+                </p>
+                <p>
+                    E°sel = E°katoda - E°anoda = 0.34 - (-0.76) = 1.10 Volt (positif, reaksi spontan)
+                </p>
+            </div>
+            <button class="button next-level" id="nextLevelButton">Lanjut ke Level 2</button>
+        </div>
+    </div>
+    
+    <!-- Failure Modal -->
+    <div class="modal" id="failureModal">
+        <div class="modal-content">
+            <div class="welcome-image">📚</div>
+            <h2 class="modal-title">Ups, Coba Lagi!</h2>
+            <p class="modal-text" id="failureText">
+                Jawaban Anda belum tepat. Anda masih memiliki <span id="remainingLives">2</span> kesempatan.
+            </p>
+            <div class="explanation">
+                <h3>Petunjuk:</h3>
+                <p>
+                    Dalam sel galvani, reaksi spontan terjadi ketika:
+                </p>
+                <ul style="text-align: left; margin-left: 20px;">
+                    <li>Potensial sel (E°sel) bernilai positif</li>
+                    <li>E°sel = E°katoda - E°anoda</li>
+                    <li>Logam dengan potensial reduksi lebih negatif akan teroksidasi (anoda)</li>
+                    <li>Logam dengan potensial reduksi lebih positif akan tereduksi (katoda)</li>
+                </ul>
+                <p style="margin-top: 10px;">
+                    Perhatikan posisi logam dalam deret elektrokimia!
+                </p>
+            </div>
+            <button class="button" id="tryAgainButton">Coba Lagi</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const welcomeModal = document.getElementById('welcomeModal');
+            const successModal = document.getElementById('successModal');
+            const failureModal = document.getElementById('failureModal');
+            const startGameButton = document.getElementById('startGameButton');
+            const nextLevelButton = document.getElementById('nextLevelButton');
+            const tryAgainButton = document.getElementById('tryAgainButton');
+            const optionCards = document.querySelectorAll('.option-card');
+            const dropArea = document.getElementById('dropArea');
+            const checkButton = document.getElementById('checkButton');
+            const feedback = document.getElementById('feedback');
+            const timeDisplay = document.getElementById('time');
+            const lives = document.querySelectorAll('.life');
+            const remainingLivesText = document.getElementById('remainingLives');
+            const activePairsContainer = document.getElementById('activePairs');
+            const failureText = document.getElementById('failureText');
+            
+            // Game state
+            let timer;
+            let timeLeft = 180; // 3 minutes
+            let livesLeft = 3;
+            let currentPair = null;
+            let gameStarted = false;
+            
+            // Event Listeners
+            startGameButton.addEventListener('click', startGame);
+            nextLevelButton.addEventListener('click', goToNextLevel);
+            tryAgainButton.addEventListener('click', tryAgain);
+            checkButton.addEventListener('click', checkAnswer);
+            
+            // Start drag events
+            optionCards.forEach(card => {
+                card.addEventListener('dragstart', dragStart);
+                card.addEventListener('dragend', dragEnd);
+            });
+            
+            // Drop area events
+            dropArea.addEventListener('dragover', dragOver);
+            dropArea.addEventListener('dragenter', dragEnter);
+            dropArea.addEventListener('dragleave', dragLeave);
+            dropArea.addEventListener('drop', drop);
+            
+            // Game functions
+            function startGame() {
+                welcomeModal.classList.remove('show');
+                gameStarted = true;
+                startTimer();
+            }
+            
+            function goToNextLevel() {
+                // In a complete game, this would navigate to Level 2
+                // For now, we'll just reload the page
+                location.reload();
+            }
+            
+            function tryAgain() {
+                failureModal.classList.remove('show');
+                
+                // Reset drop area
+                dropArea.innerHTML = '<p>Tarik pasangan redoks ke sini</p>';
+                currentPair = null;
+                checkButton.disabled = true;
+                
+                // Make all cards draggable again
+                optionCards.forEach(card => {
+                    card.style.display = 'flex';
+                    card.setAttribute('draggable', 'true');
+                });
+                
+                // Clear the active pairs
+                activePairsContainer.innerHTML = '';
+            }
+            
+            function checkAnswer() {
+                if (currentPair === 'A') {
+                    // Correct answer
+                    feedback.textContent = 'Benar! Pasangan Zn²⁺/Zn dan Cu²⁺/Cu dapat membentuk reaksi redoks spontan.';
+                    feedback.className = 'feedback show success';
+                    clearInterval(timer);
+                    
+                    // Show success after a brief delay
+                    setTimeout(() => {
+                        successModal.classList.add('show');
+                    }, 1500);
+                    
+                } else {
+                    // Wrong answer
+                    livesLeft--;
+                    feedback.textContent = 'Jawaban tidak tepat. Coba lagi!';
+                    feedback.className = 'feedback show error';
+                    
+                    // Update lives display
+                    lives[livesLeft].textContent = '💔';
+                    remainingLivesText.textContent = livesLeft;
+                    
+                    if (livesLeft === 0) {
+                        // Game over
+                        clearInterval(timer);
+                        failureText.textContent = 'Jawaban tidak tepat. Anda telah menggunakan semua kesempatan.';
+                        failureModal.classList.add('show');
+                    } else {
+                        // Show failure modal after a brief delay
+                        setTimeout(() => {
+                            failureModal.classList.add('show');
+                        }, 1500);
+                    }
+                }
+            }
+            
+            function startTimer() {
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timeDisplay.textContent = timeLeft;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        timeDisplay.textContent = '0';
+                        
+                        // Time's up
+                        feedback.textContent = 'Waktu habis!';
+                        feedback.className = 'feedback show error';
+                        
+                        // Show failure modal
+                        failureText.textContent = 'Waktu habis! Anda tidak sempat menyelesaikan puzzle.';
+                        setTimeout(() => {
+                            failureModal.classList.add('show');
+                        }, 1000);
+                    }
+                }, 1000);
+            }
+            
+            // Drag and Drop functions
+            function dragStart(e) {
+                this.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', this.dataset.pair);
+            }
+            
+            function dragEnd() {
+                this.classList.remove('dragging');
+            }
+            
+            function dragOver(e) {
+                e.preventDefault();
+            }
+            
+            function dragEnter(e) {
+                e.preventDefault();
+                this.classList.add('highlight');
+            }
+            
+            function dragLeave() {
+                this.classList.remove('highlight');
+            }
+            
+            function drop(e) {
+                e.preventDefault();
+                this.classList.remove('highlight');
+                
+                const pairId = e.dataTransfer.getData('text/plain');
+                currentPair = pairId;
+                
+                // Find the dropped card
+                const droppedCard = document.querySelector(`.option-card[data-pair="${pairId}"]`);
+                
+                // Update drop area
+                this.innerHTML = `
+                    <div class="pair-name">Pasangan ${pairId}</div>
+                    <div class="pair-formula">${droppedCard.querySelector('.pair-formula').textContent}</div>
+                `;
+                
+                // Hide the original card
+                droppedCard.style.display = 'none';
+                droppedCard.setAttribute('draggable', 'false');
+                
+                // Add to active pairs
+                activePairsContainer.innerHTML = `
+                    <div class="active-pair">
+                        <div class="pair-name">Pasangan Dipilih:</div>
+                        <div class="pair-formula">${droppedCard.querySelector('.pair-formula').textContent}</div>
+                    </div>
+                `;
+                
+                // Enable check button
+                checkButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
